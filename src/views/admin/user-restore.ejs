@@ -1,0 +1,11 @@
+<%- include('partials/start') %>
+<a href="/admin/users/deleted" class="back-link">← Gelöschte Nutzer</a><h1 class="h2 mt-3">Nutzer wiederherstellen</h1>
+<p>Ursprünglicher Benutzername: <strong><%= user.deleted_username %></strong></p><p class="text-secondary">Der Account und seine zugehörigen Daten bleiben erhalten. Vorherige Sitzungen bleiben beendet.</p>
+<% if (error) { %><div class="alert alert-danger" role="alert"><%= error %></div><% } %>
+<form class="card border-0 form-card" method="post"><div class="card-body"><input type="hidden" name="_csrf" value="<%= csrfToken %>">
+  <% if (conflict) { %><div class="alert alert-warning">Der ursprüngliche Benutzername ist bereits vergeben. Bitte wähle einen neuen Namen.</div><label class="form-label" for="username">Neuer Benutzername</label><input class="form-control mb-3" id="username" name="username" maxlength="64" required><% } %>
+  <label class="form-label" for="reason">Begründung</label><input class="form-control mb-3" id="reason" name="reason" maxlength="500" required>
+  <div class="form-check"><input class="form-check-input" type="checkbox" id="confirm" name="confirm" value="yes" required><label class="form-check-label" for="confirm">Wiederherstellung bestätigen</label></div>
+  <button class="btn btn-primary mt-3">Nutzer wiederherstellen</button>
+</div></form>
+<%- include('partials/end') %>

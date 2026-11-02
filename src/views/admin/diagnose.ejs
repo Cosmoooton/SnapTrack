@@ -1,0 +1,6 @@
+<%- include('partials/start') %>
+<a class="back-link" href="/admin/users/<%= user.id %>">← <%= user.username %></a><h1 class="h2 mt-3">Daten prüfen</h1><p class="text-secondary">Diese Prüfung ist schreibgeschützt. Es werden keine Reparaturen ausgeführt.</p>
+<div class="card border-0 mt-4"><div class="card-body"><h2 class="h5">Datenbankbeziehungen</h2><p class="mb-0"><%= foreignKeys ? foreignKeys + ' ungültige Beziehungen in der gesamten Datenbank gefunden.' : 'Keine ungültigen Beziehungen gefunden.' %></p></div></div>
+<% diagnostics.forEach(item => { %><div class="card border-0 mt-3"><div class="card-body"><h2 class="h5"><%= item.profile.username %></h2><p>Ungültige Score-Einträge: <strong><%= item.invalid %></strong> · Sinkende Score-Intervalle: <strong><%= item.decreases %></strong></p><% if (item.stats) { %><p class="mb-0">Einträge: <%= item.stats.count %> · Aktuelle Streak: <%= item.stats.tracking.current %> · Längste Streak: <%= item.stats.tracking.longestStreak %></p><% } else { %><p class="text-warning mb-0">Statistiken konnten wegen ungültiger Einträge nicht geprüft werden.</p><% } %></div></div><% }) %>
+<p class="text-secondary mt-4">Fehlerprotokolle und eine Prüfung auf fachliche Duplikate sind noch nicht verfügbar.</p>
+<%- include('partials/end') %>

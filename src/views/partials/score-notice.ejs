@@ -1,0 +1,4 @@
+<% if (scoreSaved) { %><div class="score-toast" role="status" data-expires="<%= scoreSaved.expires || 0 %>" data-streak-profile="<%= scoreSaved.effect ? scoreSaved.effect.profileId : '' %>">
+  <span><i class="bi bi-check-circle-fill me-2" aria-hidden="true"></i>Score gespeichert<% if (scoreSaved.effect) { %> <i class="bi bi-fire streak-celebrate" aria-hidden="true"></i><% } %><% if (scoreSaved.effect && scoreSaved.effect.milestone) { %> · <%= scoreSaved.effect.milestone %> Tage in Folge!<% } %></span>
+  <% if (scoreSaved.key) { %><form method="post" action="/scores/undo"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><input type="hidden" name="key" value="<%= scoreSaved.key %>"><input type="hidden" name="returnTo" value="<%= returnTo %>"><button type="submit">Rückgängig</button></form><% } %>
+</div><% } %>

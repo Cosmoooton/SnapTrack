@@ -1,0 +1,8 @@
+<% const current = profile.scores[0]; const previous = profile.scores[1]; const difference = previous ? current.score - previous.score : null; const duration = previous ? scoreDuration(current.created_at, previous.created_at) : null; %>
+<div class="score-overview">
+  <span class="score-label">Snapscore</span>
+  <div class="score-value" data-profile-id="<%= profile.id %>" data-score="<%= current ? current.score : '' %>"><%= current ? current.score.toLocaleString('de-DE') : '–' %></div>
+  <div class="score-change <%= difference !== null && difference > 0 ? 'score-change-positive' : '' %>"><%= difference === null ? (current ? 'Noch kein Vergleich' : 'Noch kein Snapscore eingetragen') : (difference > 0 ? '+' : '') + difference.toLocaleString('de-DE') + (duration ? ' in ' + duration : ' · Zeitraum nicht verfügbar') %></div>
+  <% if (!current) { %><div class="score-updated">Trage den ersten Score ein, um den Verlauf zu starten.</div><% } %>
+  <% if (current) { %><div class="score-updated">Zuletzt eingetragen: <time class="local-time" datetime="<%= current.created_at %>"><%= new Intl.DateTimeFormat('de-DE', { dateStyle: 'short', timeStyle: 'short', timeZone: 'UTC' }).format(new Date(current.created_at)) %> UTC</time></div><% } %>
+</div>

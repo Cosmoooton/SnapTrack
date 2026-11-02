@@ -1,0 +1,40 @@
+<%- include('../partials/head') %>
+<%- include('../partials/nav') %>
+<main class="container dashboard py-4 py-md-5">
+  <%- include('../partials/score-notice', { scoreSaved, returnTo: 'profile' }) %>
+  <% if (actionNotice) { %><div class="score-toast score-notice" role="status" data-expires="0"><span><i class="bi bi-check-circle-fill me-2" aria-hidden="true"></i><%= actionNotice %></span></div><% } %>
+  <a href="/" class="back-link"><i class="bi bi-arrow-left me-2" aria-hidden="true"></i>Zurück zum Dashboard</a>
+  <article class="card border-0 shadow-sm surface-card form-card score-card profile-hero mt-4"><div class="card-body">
+    <div class="profile-identity"><span class="profile-avatar"><i class="bi bi-person" aria-hidden="true"></i></span><div class="min-width-0"><p class="profile-caption">Snapchat-Account</p><h1 class="profile-title profile-name"><%= profile.username %></h1></div></div>
+    <%- include('../partials/score-summary', { profile }) %>
+    <button class="btn btn-primary score-action" type="button" data-bs-toggle="modal" data-bs-target="#score-modal-<%= profile.id %>"><i class="bi bi-plus-lg me-2" aria-hidden="true"></i>Neuen Score eintragen</button>
+    <p class="profile-created">Hinzugefügt am <%= createdDate %></p>
+  </div></article>
+  <section class="history-section form-card mt-4">
+    <nav class="profile-tabs" aria-label="Profilbereiche"><% [['liste','Liste'], ['verlauf','Verlauf'], ['fakten','Fakten'], ['tracking','Tracking']].forEach(([key, label]) => { %><a href="?tab=<%= key %>" class="profile-tab <%= activeTab === key ? 'is-active' : '' %>" <%- activeTab === key ? 'aria-current="page"' : '' %>><%= label %></a><% }) %></nav>
+    <% if (activeTab === 'liste') { %>
+    <div class="history-heading"><h2>Deine Einträge</h2></div>
+    <% if (!history.length) { %><p class="text-secondary mb-0"><%= page > 1 ? 'Keine weiteren Einträge vorhanden.' : 'Du hast noch keinen Snapscore eingetragen.' %></p><% } else { %>
+      <ul class="list-unstyled mb-0"><% history.slice(0, 50).forEach((entry, index) => { const older = history[index + 1]; const change = older ? entry.score - older.score : null; %>
+        <li class="history-item"><span class="history-dot" aria-hidden="true"></span><div class="history-content"><div><time class="local-time history-time" datetime="<%= entry.created_at %>"><%= new Intl.DateTimeFormat('de-DE', { dateStyle: 'short', timeStyle: 'short', timeZone: 'UTC' }).format(new Date(entry.created_at)) %> UTC</time><div class="history-score"><%= entry.score.toLocaleString('de-DE') %></div></div><% if (change !== null) { %><span class="history-change <%= change > 0 ? 'score-change-positive' : '' %>"><%= (change > 0 ? '+' : '') + change.toLocaleString('de-DE') %></span><% } %><div class="profile-actions"><a class="btn btn-secondary icon-action" href="/profiles/<%= profile.id %>/scores/<%= entry.id %>/edit" aria-label="Score korrigieren"><i class="bi bi-pencil" aria-hidden="true"></i></a><a class="btn btn-secondary icon-action text-danger" href="/profiles/<%= profile.id %>/scores/<%= entry.id %>/delete" aria-label="Eintrag löschen"><i class="bi bi-trash3" aria-hidden="true"></i></a></div></div></li>
+      <% }) %></ul>
+    <% } %>
+    <% if (page > 1 || hasNext) { %><nav class="d-flex gap-3 mt-4" aria-label="Einträge durchblättern"><% if (page > 1) { %><a class="btn btn-secondary" href="?tab=liste&amp;page=<%= page - 1 %>">Neuere Einträge</a><% } %><% if (hasNext) { %><a class="btn btn-secondary" href="?tab=liste&amp;page=<%= page + 1 %>">Ältere Einträge</a><% } %></nav><% } %>
+    <% } else if (activeTab === 'verlauf') { %>
+      <div class="history-heading"><h2>Score-Verlauf</h2></div>
+      <div class="periods" aria-label="Zeitraum"><% [['1','Tag'],['7','Woche'],['30','Monat'],['183','6 Monate'],['365','Jahr'],['all','Insgesamt']].forEach(([value,label]) => { %><button type="button" class="period-chip <%= value === '7' ? 'is-active' : '' %>" data-days="<%= value %>" aria-pressed="<%= value === '7' %>"><%= label %></button><% }) %></div>
+      <div id="score-chart-data" data-endpoint="/profiles/<%= profile.id %>/chart-data"></div>
+      <p id="chart-message" class="text-secondary mt-3" aria-live="polite"></p>
+      <div class="chart-wrap"><canvas id="score-chart" role="img" aria-label="Verlauf deiner eingetragenen Snapscores"></canvas></div>
+    <% } else if (activeTab === 'fakten') { %>
+      <%- include('../partials/score-facts', { stats, scoreDuration }) %>
+    <% } else { %>
+      <%- include('../partials/score-tracking', { stats, scoreDuration }) %>
+    <% } %>
+  </section>
+</main>
+<%- include('../partials/score-modal', { profile, returnTo: 'profile' }) %>
+<script src="<%= assetBase %>/vendor/bootstrap/js/bootstrap.bundle.min.js" defer></script>
+<% if (activeTab === 'verlauf') { %><script src="<%= assetBase %>/vendor/chartjs/chart.umd.js" defer></script><script src="<%= assetBase %>/vendor/chartjs-date/chartjs-adapter-date-fns.bundle.min.js" defer></script><script src="<%= assetBase %>/js/score-chart.js" defer></script><% } %>
+<script src="<%= assetBase %>/js/scores.js" defer></script>
+<%- include('../partials/footer') %>

@@ -1,0 +1,18 @@
+<div class="modal fade" id="score-modal-<%= profile.id %>" tabindex="-1" aria-labelledby="score-title-<%= profile.id %>" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered"><div class="modal-content">
+    <form method="post" action="/profiles/<%= profile.id %>/scores" class="score-form" data-previous="<%= profile.scores[0] ? profile.scores[0].score : '' %>">
+      <div class="sheet-handle" aria-hidden="true"></div>
+      <div class="modal-header"><h2 class="modal-title fs-5" id="score-title-<%= profile.id %>">Neuen Score eintragen</h2><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Schließen"></button></div>
+      <div class="modal-body">
+        <p class="text-secondary">Trage den aktuellen Snapscore für <strong><%= profile.username %></strong> manuell ein.</p>
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>"><input type="hidden" name="submissionKey" value="<%= profile.submissionKey %>"><input type="hidden" name="returnTo" value="<%= returnTo %>">
+        <label for="score-<%= profile.id %>" class="form-label fw-medium">Snapscore</label>
+        <input class="form-control score-input" id="score-<%= profile.id %>" name="score" type="text" inputmode="numeric" pattern="[0-9]+" maxlength="16" value="<%= profile.scores[0] ? profile.scores[0].score : '' %>" required autocomplete="off" aria-describedby="score-help-<%= profile.id %>">
+        <div class="form-text" id="score-help-<%= profile.id %>">Gib nur Ziffern ein, ohne Komma oder Minuszeichen.</div>
+        <div class="score-difference mt-2" aria-live="polite"></div>
+        <div class="score-error alert alert-danger mt-3 mb-0" role="alert" hidden></div>
+      </div>
+      <div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Abbrechen</button><button type="submit" class="btn btn-primary">Speichern</button></div>
+    </form>
+  </div></div>
+</div>

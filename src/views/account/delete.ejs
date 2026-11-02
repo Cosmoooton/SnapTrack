@@ -1,0 +1,14 @@
+<%- include('../partials/head') %>
+<%- include('../partials/nav') %>
+<main class="container dashboard py-4 py-md-5"><a href="/account" class="back-link"><i class="bi bi-arrow-left me-2" aria-hidden="true"></i>Zurück zu den Accounteinstellungen</a>
+  <div class="card border-0 shadow-sm surface-card form-card mt-4"><div class="card-body p-4 p-sm-5"><h1 class="h3 fw-semibold">Account löschen?</h1>
+    <p class="text-secondary">Du wirst abgemeldet. Dein Benutzername wird frei; der Support kann deinen Account und deine Daten wiederherstellen.</p>
+    <% if (error) { %><div class="alert alert-danger" role="alert"><%= error %></div><% } %>
+    <form method="post" action="/account/delete"><input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <label class="form-label" for="password">Dein Passwort</label><input class="form-control mb-3" id="password" name="password" type="password" autocomplete="current-password" required>
+      <div class="form-check"><input class="form-check-input" id="confirm" name="confirm" type="checkbox" value="yes" required><label class="form-check-label" for="confirm">Ich möchte meinen Account löschen.</label></div>
+      <div class="form-actions mt-4"><button class="btn btn-danger" type="submit">Account löschen</button><a class="btn btn-secondary" href="/account">Abbrechen</a></div>
+    </form>
+  </div></div>
+</main>
+<%- include('../partials/footer') %>

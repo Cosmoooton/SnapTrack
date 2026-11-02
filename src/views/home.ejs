@@ -1,0 +1,28 @@
+<%- include('partials/head') %>
+<%- include('partials/nav') %>
+<main class="container dashboard py-4 py-md-5">
+  <%- include('partials/score-notice', { scoreSaved, returnTo: 'dashboard' }) %>
+  <div class="page-heading"><p class="page-kicker">DEINE ÜBERSICHT</p><h1>Deine Accounts</h1><p>Deine Snapscores auf einen Blick.</p></div>
+  <% if (profiles.length === 0) { %>
+    <section class="card border-0 shadow-sm surface-card text-center"><div class="card-body empty-state">
+      <span class="empty-icon"><i class="bi bi-person" aria-hidden="true"></i></span>
+      <h2 class="h5 fw-semibold mt-4">Noch keine Accounts</h2><p class="text-secondary mb-4">Füge deinen ersten Snapchat-Account hinzu, um loszulegen.</p><a class="btn btn-primary" href="/profiles/new">Account hinzufügen</a>
+    </div></section>
+  <% } else { %>
+    <div class="row g-3 g-md-4">
+      <% profiles.forEach(profile => { %>
+        <div class="col-12 col-md-6"><article class="card border-0 shadow-sm surface-card score-card h-100"><div class="card-body d-flex flex-column">
+          <a class="score-card-link" href="/profiles/<%= profile.id %>" aria-label="Profil von <%= profile.username %> öffnen">
+            <div class="score-card-header"><div class="profile-identity"><span class="profile-avatar"><i class="bi bi-person" aria-hidden="true"></i></span><h2 class="profile-card-name profile-name"><%= profile.username %></h2><% if (profile.streak >= 2) { %><span class="streak-badge" aria-label="<%= profile.streak %> Tage in Folge"><i class="bi bi-fire" aria-hidden="true"></i> <%= profile.streak %></span><% } %></div><i class="bi bi-arrow-up-right score-card-arrow" aria-hidden="true"></i></div>
+            <%- include('partials/score-summary', { profile }) %>
+          </a>
+          <button class="btn btn-primary score-action mt-auto" type="button" data-bs-toggle="modal" data-bs-target="#score-modal-<%= profile.id %>"><i class="bi bi-plus-lg me-2" aria-hidden="true"></i>Neuen Score eintragen</button>
+        </div></article></div>
+      <% }) %>
+    </div>
+  <% } %>
+</main>
+<% profiles.forEach(profile => { %><%- include('partials/score-modal', { profile, returnTo: 'dashboard' }) %><% }) %>
+<script src="<%= assetBase %>/vendor/bootstrap/js/bootstrap.bundle.min.js" defer></script>
+<script src="<%= assetBase %>/js/scores.js" defer></script>
+<%- include('partials/footer') %>

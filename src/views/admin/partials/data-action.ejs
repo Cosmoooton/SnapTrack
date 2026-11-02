@@ -1,0 +1,11 @@
+<form method="post" action="/admin/users/<%= user.id %>/deleted/action">
+  <input type="hidden" name="_csrf" value="<%= csrfToken %>"><input type="hidden" name="profileId" value="<%= profileId %>"><input type="hidden" name="entryId" value="<%= entryId %>"><input type="hidden" name="action" value="<%= restore %>">
+  <label class="form-label d-block">Begründung<input class="form-control" name="reason" maxlength="500" required></label>
+  <label class="d-block"><input type="checkbox" name="confirm" value="yes" required> Wiederherstellung bestätigen</label><button class="btn btn-primary mt-3">Wiederherstellen</button>
+</form>
+<details class="mt-4"><summary>Endgültig löschen</summary><form method="post" action="/admin/users/<%= user.id %>/deleted/action" class="mt-3">
+  <input type="hidden" name="_csrf" value="<%= csrfToken %>"><input type="hidden" name="profileId" value="<%= profileId %>"><input type="hidden" name="entryId" value="<%= entryId %>"><input type="hidden" name="action" value="<%= purge %>">
+  <p class="text-danger">Diese Aktion kann nicht rückgängig gemacht werden.</p><label class="form-label d-block">Begründung<input class="form-control" name="reason" maxlength="500" required></label>
+  <label class="form-label d-block">Administrator-Passwort<input type="password" class="form-control" name="password" autocomplete="current-password" required></label>
+  <label class="d-block"><input type="checkbox" name="confirm" value="yes" required> Endgültiges Löschen bestätigen</label><button class="btn btn-danger mt-3">Endgültig löschen</button>
+</form></details>

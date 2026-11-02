@@ -1,0 +1,18 @@
+<%- include('partials/start') %>
+<a href="/admin/users" class="back-link">← Nutzer</a>
+<h1 class="h2 mt-3 mb-4">Nutzer hinzufügen</h1>
+<div class="card border-0 form-card"><div class="card-body p-4">
+  <p class="text-secondary">Der neue Nutzer erhält zunächst die Rolle „user“.</p>
+  <% if (error) { %><div class="alert alert-danger" role="alert"><%= error %></div><% } %>
+  <form method="post" action="/admin/users/new">
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+    <div class="mb-3"><label class="form-label" for="username">Benutzername</label><input class="form-control" id="username" name="username" value="<%= username %>" maxlength="64" autocomplete="off" required></div>
+    <div class="mb-3"><label class="form-label" for="password">Startpasswort</label><div class="password-field"><input class="form-control" id="password" name="password" type="password" autocomplete="new-password" required><button class="password-toggle" type="button" data-password-toggle="password" aria-label="Passwort anzeigen" aria-pressed="false"><i class="bi bi-eye" aria-hidden="true"></i></button></div></div>
+    <div class="form-check mb-3"><input class="form-check-input" id="ignoreRequirements" name="ignoreRequirements" type="checkbox" value="yes" <%= ignoreRequirements ? 'checked' : '' %>><label class="form-check-label" for="ignoreRequirements">Anforderungen ignorieren</label></div>
+    <p class="small text-secondary">Ohne Ausnahme: mindestens 8 Zeichen, eine Zahl, ein Sonderzeichen sowie einen Groß- und einen Kleinbuchstaben.</p>
+    <div class="form-check mb-4"><input class="form-check-input" id="forcePasswordChange" name="forcePasswordChange" type="checkbox" value="yes" <%= forcePasswordChange ? 'checked' : '' %>><label class="form-check-label" for="forcePasswordChange">Nutzer auffordern, ein neues Passwort einzugeben</label><div class="form-text">Beim nächsten Login muss das Startpasswort geändert werden.</div></div>
+    <div class="form-actions"><button class="btn btn-primary" type="submit">Nutzer anlegen</button><a class="btn btn-secondary" href="/admin/users">Abbrechen</a></div>
+  </form>
+</div></div>
+<script src="<%= assetBase %>/js/password-toggle.js" defer></script>
+<%- include('partials/end') %>

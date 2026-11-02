@@ -1,0 +1,11 @@
+<%- include('partials/start') %>
+<a href="/admin/users/<%= user.id %>" class="back-link">← <%= user.username %></a><h1 class="h2 mt-3">Nutzer löschen?</h1>
+<p>Der Nutzer <strong><%= user.username %></strong> wird abgemeldet. Sein Name wird frei und seine Daten bleiben zur Wiederherstellung erhalten.</p>
+<% if (error) { %><div class="alert alert-danger" role="alert"><%= error %></div><% } %>
+<form class="card border-0 form-card" method="post"><div class="card-body"><input type="hidden" name="_csrf" value="<%= csrfToken %>">
+  <label class="form-label" for="reason">Begründung</label><input class="form-control mb-3" id="reason" name="reason" maxlength="500" required>
+  <label class="form-label" for="password">Dein Administrator-Passwort</label><input class="form-control mb-3" type="password" id="password" name="password" autocomplete="current-password" required>
+  <div class="form-check"><input class="form-check-input" type="checkbox" id="confirm" name="confirm" value="yes" required><label class="form-check-label" for="confirm">Löschung bestätigen</label></div>
+  <button class="btn btn-danger mt-3">Nutzer löschen</button>
+</div></form>
+<%- include('partials/end') %>

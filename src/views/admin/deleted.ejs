@@ -1,0 +1,12 @@
+<%- include('partials/start') %>
+<a class="back-link" href="/admin/users/<%= user.id %>">← <%= user.username %></a><h1 class="h2 mt-3">Gelöschte Daten</h1>
+<p class="text-secondary">Aufbewahrungsfrist: <%= retention %> Tage. Daten werden nicht automatisch entfernt. Endgültiges Löschen ist unabhängig davon möglich und kann nicht rückgängig gemacht werden.</p>
+<h2 class="h4 mt-4">Accounts</h2>
+<% if (!deletedProfiles.length) { %><p class="text-secondary">Keine gelöschten Accounts.</p><% } %>
+<% deletedProfiles.forEach(item => { %><section class="card border-0 mb-3"><div class="card-body"><h3 class="h5"><%= item.username %> · #<%= item.id %></h3><p class="text-secondary">Gelöscht: <%= item.deleted_at %> · Ursprung: <%= item.deleted_by || 'Unbekannt' %>. Beim Wiederherstellen bleiben zugehörige Einträge erhalten.</p>
+<%- include('partials/data-action', { user, profileId: item.id, entryId: '', restore: 'restore_profile', purge: 'purge_profile', csrfToken }) %></div></section><% }) %>
+<h2 class="h4 mt-4">Score-Einträge</h2><p class="text-secondary">Einträge gelöschter Accounts erscheinen nach deren Wiederherstellung.</p>
+<% if (!deletedScores.length) { %><p class="text-secondary">Keine einzeln gelöschten Einträge.</p><% } %>
+<% deletedScores.forEach(item => { %><section class="card border-0 mb-3"><div class="card-body"><h3 class="h5"><%= item.username %> · <%= item.score.toLocaleString('de-DE') %> · #<%= item.id %></h3><p class="text-secondary">Messung: <%= item.created_at %> · Gelöscht: <%= item.deleted_at %> · Ursprung: <%= item.deleted_by || 'Unbekannt' %></p><% if (item.orderWarning) { %><p class="text-warning">Hinweis: Nach der Wiederherstellung enthält die zeitliche Score-Reihenfolge einen Rückgang.</p><% } %>
+<%- include('partials/data-action', { user, profileId: item.profile_id, entryId: item.id, restore: 'restore_score', purge: 'purge_score', csrfToken }) %></div></section><% }) %>
+<%- include('partials/end') %>

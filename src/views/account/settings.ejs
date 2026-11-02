@@ -1,0 +1,8 @@
+<%- include('../partials/head') %>
+<%- include('../partials/nav') %>
+<main class="container dashboard py-4 py-md-5"><a href="/" class="back-link"><i class="bi bi-arrow-left me-2" aria-hidden="true"></i>Zurück zur Übersicht</a>
+  <div class="card border-0 shadow-sm surface-card form-card mt-4"><div class="card-body p-4 p-sm-5"><h1 class="h3 fw-semibold">Accounteinstellungen</h1><p class="text-secondary mb-4"><%= currentUser.username %></p>
+    <div class="d-grid gap-3"><a class="btn btn-primary" href="/account/password"><i class="bi bi-key me-2" aria-hidden="true"></i>Passwort ändern</a><a class="btn btn-outline-danger" href="/account/delete"><i class="bi bi-trash3 me-2" aria-hidden="true"></i>Account löschen</a></div>
+  </div></div>
+</main>
+<%- include('../partials/footer') %>

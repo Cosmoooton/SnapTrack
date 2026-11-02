@@ -1,0 +1,14 @@
+<%- include('../partials/head') %>
+<%- include('../partials/nav') %>
+<main class="container dashboard py-4 py-md-5">
+  <a href="/profiles" class="back-link"><i class="bi bi-arrow-left me-2" aria-hidden="true"></i>Zurück zur Account-Verwaltung</a>
+  <div class="card border-0 shadow-sm surface-card form-card mt-4"><div class="card-body p-4 p-sm-5">
+    <h1 class="h3 fw-semibold">Profil löschen?</h1>
+    <p class="text-secondary">Möchtest du <strong class="text-body"><%= profile.username %></strong> wirklich aus deiner Übersicht entfernen?</p>
+    <form method="post" action="/profiles/<%= profile.id %>/delete" class="form-actions mt-4">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <button type="submit" class="btn btn-danger">Profil löschen</button><a class="btn btn-secondary" href="/profiles">Abbrechen</a>
+    </form>
+  </div></div>
+</main>
+<%- include('../partials/footer') %>

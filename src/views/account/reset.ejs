@@ -1,0 +1,11 @@
+<%- include('../partials/head') %>
+<main class="auth-layout container"><div class="auth-card card border-0 shadow-sm"><div class="card-body p-4 p-sm-5">
+  <h1 class="h3">Neues Passwort</h1><p class="text-secondary">Wähle ein neues Passwort für dein Konto.</p>
+  <% if (error) { %><div class="alert alert-danger" role="alert"><%= error %></div><% } %>
+  <form method="post" action="/reset/<%= token %>"><input type="hidden" name="_csrf" value="<%= csrfToken %>">
+    <label class="form-label" for="newPassword">Neues Passwort</label><input class="form-control mb-3" id="newPassword" name="newPassword" type="password" autocomplete="new-password" required>
+    <label class="form-label" for="confirmPassword">Passwort bestätigen</label><input class="form-control mb-3" id="confirmPassword" name="confirmPassword" type="password" autocomplete="new-password" required>
+    <p class="small text-secondary">Mindestens 8 Zeichen, eine Zahl, ein Sonderzeichen sowie einen Groß- und einen Kleinbuchstaben.</p><button class="btn btn-primary w-100">Passwort speichern</button>
+  </form>
+</div></div></main>
+<%- include('../partials/footer') %>

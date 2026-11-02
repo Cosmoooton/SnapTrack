@@ -1,0 +1,5 @@
+<%- include('partials/start') %>
+<a class="back-link" href="/admin/users/<%= user.id %>/profiles/<%= profile.id %>">← <%= profile.username %></a><h1 class="h2 mt-3">Score-Eintrag löschen?</h1>
+<p>Account: <strong><%= profile.username %></strong> · Score: <strong><%= entry.score.toLocaleString('de-DE') %></strong> · Zeitpunkt: <%= entry.created_at %>. Der Eintrag kann im Support-Bereich wiederhergestellt werden.</p>
+<form class="card border-0" method="post"><div class="card-body"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><label class="form-label d-block">Begründung<input class="form-control" name="reason" maxlength="500" required></label><label class="form-label d-block">Administrator-Passwort<input class="form-control" type="password" name="password" autocomplete="current-password" required></label><label><input type="checkbox" name="confirm" value="yes" required> Eintrag löschen bestätigen</label><div><button class="btn btn-danger mt-3">Eintrag löschen</button></div></div></form>
+<%- include('partials/end') %>

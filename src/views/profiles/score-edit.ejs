@@ -1,0 +1,17 @@
+<%- include('../partials/head') %>
+<%- include('../partials/nav') %>
+<main class="container dashboard py-4 py-md-5">
+  <a href="/profiles/<%= profileId %>?tab=liste" class="back-link"><i class="bi bi-arrow-left me-2" aria-hidden="true"></i>Zurück zum Profil</a>
+  <div class="card border-0 shadow-sm surface-card form-card mt-4"><div class="card-body p-4 p-sm-5">
+    <h1 class="h3 fw-semibold">Score korrigieren</h1>
+    <p class="text-secondary">Ändere den gespeicherten Score für diesen Eintrag.</p>
+    <% if (error) { %><div class="alert alert-danger" role="alert"><%= error %></div><% } %>
+    <form method="post" action="/profiles/<%= profileId %>/scores/<%= entry.id %>/edit">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <label for="score" class="form-label fw-medium">Snapscore</label>
+      <input class="form-control" id="score" name="score" type="text" inputmode="numeric" pattern="[0-9]+" maxlength="16" value="<%= entry.score %>" required>
+      <div class="form-actions mt-4"><button class="btn btn-primary" type="submit">Speichern</button><a class="btn btn-secondary" href="/profiles/<%= profileId %>?tab=liste">Abbrechen</a></div>
+    </form>
+  </div></div>
+</main>
+<%- include('../partials/footer') %>

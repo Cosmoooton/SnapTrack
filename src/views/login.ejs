@@ -1,0 +1,24 @@
+<%- include('partials/head') %>
+<main class="auth-layout container">
+  <div class="auth-card card border-0 shadow-sm">
+    <div class="card-body p-4 p-sm-5">
+      <div class="brand mb-4"><span class="brand-icon"><i class="bi bi-grid-1x2-fill" aria-hidden="true"></i></span> SnapTrack</div>
+      <h1 class="h3 fw-semibold mb-2">Willkommen zurück</h1>
+      <p class="text-secondary mb-4">Melden Sie sich mit Ihrem Konto an.</p>
+      <% if (error) { %><div class="alert alert-danger" role="alert"><%= error %></div><% } %>
+      <form action="/login" method="post">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+        <div class="mb-3">
+          <label class="form-label fw-medium" for="username">Benutzername</label>
+          <input class="form-control" id="username" name="username" autocomplete="username" maxlength="64" required autofocus>
+        </div>
+        <div class="mb-4">
+          <label class="form-label fw-medium" for="password">Passwort</label>
+          <input class="form-control" type="password" id="password" name="password" autocomplete="current-password" required>
+        </div>
+        <button class="btn btn-primary w-100" type="submit">Anmelden <i class="bi bi-arrow-right ms-1" aria-hidden="true"></i></button>
+      </form>
+    </div>
+  </div>
+</main>
+<%- include('partials/footer') %>

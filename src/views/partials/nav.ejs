@@ -1,0 +1,22 @@
+<header class="app-header">
+  <nav class="container main-nav d-flex align-items-center justify-content-between gap-3 py-3" aria-label="Hauptnavigation">
+    <a class="brand text-decoration-none" href="/"><span class="brand-icon"><i class="bi bi-grid-1x2-fill" aria-hidden="true"></i></span> SnapTrack</a>
+    <div class="nav-links d-flex align-items-center gap-3">
+      <a href="/" class="nav-dashboard desktop-nav-link text-decoration-none">Übersicht</a>
+      <a href="/profiles" class="nav-dashboard desktop-nav-link text-decoration-none">Accounts verwalten</a>
+      <details class="account-menu">
+        <summary class="btn btn-outline-secondary account-toggle"><i class="bi bi-person-circle" aria-hidden="true"></i><span class="d-none d-sm-inline ms-2">Konto</span><i class="bi bi-chevron-down ms-2" aria-hidden="true"></i><span class="visually-hidden">Kontomenü öffnen</span></summary>
+        <div class="account-dropdown shadow-sm">
+          <div class="account-name text-secondary"><%= currentUser.username %></div>
+          <% if (currentUser.role === 'admin') { %><a href="/admin"><i class="bi bi-shield-lock me-2" aria-hidden="true"></i>Administration</a><% } %>
+          <a href="/account"><i class="bi bi-gear me-2" aria-hidden="true"></i>Accounteinstellungen</a>
+          <form action="/logout" method="post"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><button type="submit"><i class="bi bi-box-arrow-right me-2" aria-hidden="true"></i>Abmelden</button></form>
+        </div>
+      </details>
+    </div>
+  </nav>
+</header>
+<nav class="mobile-nav" aria-label="Mobile Navigation">
+  <a href="/"><i class="bi bi-grid" aria-hidden="true"></i><span>Übersicht</span></a>
+  <a href="/profiles"><i class="bi bi-people" aria-hidden="true"></i><span>Accounts</span></a>
+</nav>

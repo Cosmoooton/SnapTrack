@@ -1,0 +1,4 @@
+<%- include('partials/start') %>
+<h1 class="h2">Einmaliger Reset-Link</h1><p>Der Link für <strong><%= user.username %></strong> ist 30 Minuten gültig und kann nur einmal verwendet werden. Kopiere ihn jetzt und gib ihn über einen sicheren Kanal weiter. Er wird nicht erneut angezeigt.</p>
+<label class="form-label" for="link">Reset-Link</label><input id="link" class="form-control" readonly value="<%= link %>"><a class="btn btn-secondary mt-4" href="/admin/users/<%= user.id %>">Zurück zum Nutzer</a>
+<%- include('partials/end') %>

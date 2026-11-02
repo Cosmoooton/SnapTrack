@@ -1,0 +1,5 @@
+<%- include('partials/start') %>
+<a href="/admin/users" class="back-link">← Nutzer</a><h1 class="h2 mt-3 mb-4">Gelöschte Nutzer</h1>
+<p class="text-secondary">Gelöschte Nutzer und ihre Daten bleiben zur Wiederherstellung erhalten.</p>
+<% if (!users.length) { %><p>Keine gelöschten Nutzer vorhanden.</p><% } else { %><div class="card border-0"><div class="table-responsive"><table class="table table-dark mb-0"><thead><tr><th>ID</th><th>Benutzername</th><th>Gelöscht</th><th>Rolle</th><th></th></tr></thead><tbody><% users.forEach(user => { %><tr><td><%= user.id %></td><td><%= user.deleted_username %></td><td><%= user.deleted_at %></td><td><%= user.role %></td><td><a href="/admin/users/deleted/<%= user.id %>/restore">Wiederherstellen</a></td></tr><% }) %></tbody></table></div></div><% } %>
+<%- include('partials/end') %>

@@ -1,0 +1,14 @@
+<% const t = stats.tracking; const duration = ms => scoreDuration(new Date(ms).toISOString(), new Date(0).toISOString()); const date = s => new Intl.DateTimeFormat('de-DE', { dateStyle: 'medium', timeZone: 'Europe/Berlin' }).format(new Date(s)); %>
+<div class="history-heading"><h2>Dein Tracking</h2></div>
+<article class="streak-card"><p class="page-kicker">DEINE SERIE</p><% if (t.current >= 2) { %><div class="streak-value"><i class="bi bi-fire" aria-hidden="true"></i> <%= t.current %> Tage</div><p>Du hast an <%= t.current %> Tagen hintereinander einen Score eingetragen.</p><% } else { %><p>Trage an zwei Tagen hintereinander einen Score ein, um deine Streak zu starten.</p><% } %><p>Längste Streak: <strong><%= t.longestStreak %> <%= t.longestStreak === 1 ? 'Tag' : 'Tage' %></strong></p>
+  <div class="streak-days" aria-label="Letzte sieben Kalendertage"><% t.lastSeven.forEach(day => { %><div><span><%= new Intl.DateTimeFormat('de-DE', { weekday: 'short', timeZone: 'UTC' }).format(new Date(day.date + 'T12:00:00Z')) %></span><span class="streak-day <%= day.marked ? 'is-marked' : '' %>" aria-label="<%= day.date %>: <%= day.marked ? 'Eintrag vorhanden' : 'kein Eintrag' %>"><i class="bi <%= day.marked ? 'bi-check-lg' : 'bi-dash' %>" aria-hidden="true"></i></span></div><% }) %></div>
+</article>
+<div class="facts-grid mt-3">
+  <article class="fact-card"><h3>Einträge insgesamt</h3><p class="fact-value"><%= stats.count || 'Noch keine Einträge' %></p></article>
+  <article class="fact-card"><h3>Tracking seit</h3><p class="fact-value"><%= stats.first ? date(stats.first.created_at) : 'Noch keine Einträge' %></p></article>
+  <article class="fact-card"><h3>Durchschnittlicher Abstand</h3><p class="fact-value"><%= t.average === null ? 'Noch nicht genug Einträge' : duration(t.average) %></p></article>
+  <article class="fact-card"><h3>Kürzester Abstand</h3><p class="fact-value"><%= t.shortestGap === null ? 'Noch nicht genug Einträge' : duration(t.shortestGap) %></p></article>
+  <article class="fact-card"><h3>Längster Abstand</h3><p class="fact-value"><%= t.longestGap === null ? 'Noch nicht genug Einträge' : duration(t.longestGap) %></p></article>
+  <article class="fact-card"><h3>Aktive Tracking-Tage</h3><p class="fact-value"><%= stats.count ? t.days : 'Noch keine Einträge' %></p></article>
+  <article class="fact-card"><h3>Häufigste Eingabezeit</h3><p class="fact-value"><%= t.favorite || 'Noch kein eindeutiges Muster' %></p></article>
+</div>

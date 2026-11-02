@@ -1,0 +1,18 @@
+<%- include('../partials/head') %>
+<%- include('../partials/nav') %>
+<main class="container dashboard py-4 py-md-5">
+  <a href="/profiles" class="back-link"><i class="bi bi-arrow-left me-2" aria-hidden="true"></i>Zurück zur Account-Verwaltung</a>
+  <div class="card border-0 shadow-sm surface-card form-card mt-4"><div class="card-body p-4 p-sm-5">
+    <h1 class="h3 fw-semibold"><%= profile ? 'Profil bearbeiten' : 'Profil hinzufügen' %></h1>
+    <p class="text-secondary mb-4">Gib den Snapchat-Benutzernamen ein.</p>
+    <% if (error) { %><div class="alert alert-danger" role="alert"><%= error %></div><% } %>
+    <form method="post" action="<%= profile ? '/profiles/' + profile.id + '/edit' : '/profiles' %>">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <label for="username" class="form-label fw-medium">Benutzername</label>
+      <input class="form-control" id="username" name="username" value="<%= username %>" minlength="3" maxlength="30" pattern="[a-zA-Z0-9._-]{3,30}" autocapitalize="none" autocorrect="off" spellcheck="false" autocomplete="off" required aria-describedby="username-help">
+      <div class="form-text" id="username-help">3–30 Zeichen: Buchstaben, Zahlen, Punkt, Unterstrich oder Bindestrich.</div>
+      <div class="form-actions mt-4"><button class="btn btn-primary" type="submit">Speichern</button><a class="btn btn-secondary" href="/profiles">Abbrechen</a></div>
+    </form>
+  </div></div>
+</main>
+<%- include('../partials/footer') %>

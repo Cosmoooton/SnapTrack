@@ -1,0 +1,24 @@
+<% const num = n => (n > 0 ? '+' : '') + n.toLocaleString('de-DE', { maximumFractionDigits: 1 }); const duration = ms => scoreDuration(new Date(ms).toISOString(), new Date(0).toISOString()); const date = s => new Intl.DateTimeFormat('de-DE', { dateStyle: 'medium', timeZone: 'Europe/Berlin' }).format(new Date(s)); %>
+<div class="history-heading"><h2>Deine Fakten</h2></div>
+<% if (stats.hasNegative) { %><p class="stat-note">Ein Score ist zwischen zwei Einträgen gesunken. Diese Abstände zählen nicht zu den Aktivitätsmustern.</p><% } %>
+<div class="facts-grid">
+  <% if (stats.gain !== null) { %><article class="fact-card"><h3>Gesamter Zuwachs</h3><p class="fact-value"><%= num(stats.gain) %></p><p>In <%= duration(stats.elapsed) %></p></article><% } %>
+  <% if (stats.daily !== null) { %><article class="fact-card"><h3>Pro Tag</h3><p class="fact-value">Ø <%= num(stats.daily) %></p><p>Punkte pro Tag</p></article><% } %>
+  <% if (stats.hourly !== null) { %><article class="fact-card"><h3>Pro Stunde</h3><p class="fact-value">Ø <%= num(stats.hourly) %></p><p>Punkte pro Stunde</p></article><% } %>
+  <% if (stats.biggest) { %><article class="fact-card"><h3>Größter gemessener Anstieg</h3><p class="fact-value"><%= num(stats.biggest.gain) %></p><p>In <%= duration(stats.biggest.ms) %> · erfasst am <%= date(stats.biggest.entry.created_at) %></p></article><% } %>
+  <% if (stats.still) { %><article class="fact-card"><h3>Längster beobachteter Stillstand</h3><p class="fact-value"><%= duration(stats.still.ms) %></p><p>Zwischen zwei Einträgen blieb der Score gleich.</p></article><% } %>
+</div>
+<% if (stats.gain === null || stats.daily === null || stats.hourly === null || !stats.weekReady || !stats.timeReady) { %><div class="stat-note mt-3"><strong>Mehr entdecken</strong><br>Mit weiteren Einträgen kannst du bald Veränderungen nach Wochentagen und Uhrzeiten vergleichen.</div><% } %>
+<section class="pattern-section"><h3>Wochentage</h3>
+  <% if (!stats.weekReady) { %><p class="stat-note">Hier findest du bald spannende Muster. Trage dafür regelmäßig neue Scores ein. <%= Math.min(stats.qualifiedWeek, 20) %> von 20 passenden Messintervallen.</p><% } else { const max = Math.max(0, ...stats.weekday.map(w => w.rate === null ? 0 : w.rate)); %>
+    <% ['Mo','Di','Mi','Do','Fr','Sa','So'].forEach((day, i) => { const row = stats.weekday[i]; %><div class="pattern-row"><span><%= day %></span><div class="pattern-track"><span style="width: <%= row.rate === null || max === 0 ? 0 : Math.round(row.rate / max * 100) %>%"></span></div><small><%= row.rate === null ? 'Noch zu wenig Daten' : num(row.rate) + '/Std. · ' + duration(row.ms) %></small></div><% }) %>
+    <% if (stats.weekday.some(w => w.rate !== null)) { %><p class="stat-note">Höchster beobachteter Zuwachs: <%= ['Mo','Di','Mi','Do','Fr','Sa','So'][stats.weekday.findIndex(w => w.rate === max)] %>. Die Werte beziehen sich nur auf erfasste Messintervalle.</p><% } %>
+  <% } %>
+</section>
+<section class="pattern-section"><h3>Vermutete Aktivitätszeiten</h3>
+  <% if (!stats.timeReady) { %><p class="stat-note">Hier findest du bald spannende Muster. Trage dafür regelmäßig neue Scores ein. <%= Math.min(stats.qualifiedTime, 30) %> von 30 passenden Messintervallen.</p><% } else { const max = Math.max(0, ...stats.timeWindows.map(w => w.rate === null ? 0 : w.rate)); %>
+    <% stats.timeWindows.forEach(row => { %><div class="pattern-row"><span><%= row.name %></span><div class="pattern-track"><span style="width: <%= row.rate === null || max === 0 ? 0 : Math.round(row.rate / max * 100) %>%"></span></div><small><%= row.rate === null ? 'Noch zu wenig Daten' : num(row.rate) + '/Std. · ' + duration(row.ms) %></small></div><% }) %>
+    <p class="stat-note">Zeitraum mit dem höchsten beobachteten Zuwachs: <%= stats.timeWindows.find(w => w.rate === max).name %>.</p>
+  <% } %>
+  <p class="stat-note">Die Zeiten sind Schätzungen anhand deiner Einträge. Wann genau jemand aktiv war, lässt sich daraus nicht feststellen.</p>
+</section>
