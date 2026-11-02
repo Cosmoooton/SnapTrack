@@ -5,6 +5,7 @@ const scoreDuration = require('../utils/scoreDuration');
 const { streak } = require('../utils/scoreStats');
 const profileStats = require('../services/profileStats');
 const statCache = require('../utils/statCache');
+const { berlinInstant } = require('../utils/historicalScores');
 
 function takeScoreNotice(req, destination) {
   if (req.session.scoreNotice !== destination) return false;
@@ -87,12 +88,108 @@ exports.chartData = async (req, res, next) => {
     res.json({ points: await profileStats.graph(res.locals.currentUser.id, profile, period) });
   } catch (error) { next(error); }
 };
+exports.scoreNeighbor = async (req, res, next) => {
+  try {
+    const userId = res.locals.currentUser.id;
+    const profile = validId(req.params.id) && await Profile.find(userId, req.params.id);
+    if (!profile) return res.status(404).json({ error: 'Account nicht gefunden.' });
+    const converted = berlinInstant(req.query.date, req.query.time);
+    if (converted.error || Date.parse(converted.instant) > Date.now()) return res.status(400).json({ error: 'Bitte Datum und Uhrzeit prüfen.' });
+    const history = await Score.history(userId, profile.id);
+    const previous = history.find(item => item.created_at < converted.instant);
+    res.json({ previous: previous ? previous.score : null });
+  } catch (error) { next(error); }
+};
+exports.bulkPage = async (req, res, next) => {
+  try {
+    const profile = validId(req.params.id) && await Profile.find(res.locals.currentUser.id, req.params.id);
+    if (!profile) return notFound(res);
+    res.render('profiles/bulk', { profile });
+  } catch (error) { next(error); }
+};
+exports.importPage = async (req, res, next) => {
+  try {
+    const profile = validId(req.params.id) && await Profile.find(res.locals.currentUser.id, req.params.id);
+    if (!profile) return notFound(res);
+    res.render('profiles/import', { profile });
+  } catch (error) { next(error); }
+};
+exports.importPreview = async (req, res, next) => {
+  try {
+    const userId = res.locals.currentUser.id;
+    const profile = validId(req.params.id) && await Profile.find(userId, req.params.id);
+    if (!profile) return res.status(404).json({ error: 'Account nicht gefunden.' });
+    let items;
+    try { items = JSON.parse(req.body.entries); } catch { return res.status(400).json({ error: 'Bitte überprüfe deine Einträge.' }); }
+    if (!Array.isArray(items) || items.length > 500) return res.status(400).json({ error: 'Bitte höchstens 500 Einträge prüfen.' });
+    const errors = {}, prepared = [];
+    for (const [index, item] of items.entries()) {
+      if (!item || typeof item.score !== 'string' || !/^\d+$/.test(item.score) || !Number.isSafeInteger(Number(item.score))) { errors[index] = 'Bitte den Score prüfen.'; continue; }
+      const converted = berlinInstant(item.date, item.time);
+      if (converted.error || Date.parse(converted.instant) > Date.now()) {
+        errors[index] = converted.error === 'ambiguous' ? 'Diese Uhrzeit kommt bei der Zeitumstellung zweimal vor.' : converted.error === 'nonexistent' ? 'Diese Uhrzeit gibt es wegen der Zeitumstellung nicht.' : 'Bitte Datum und Uhrzeit prüfen.';
+        continue;
+      }
+      prepared.push({ time: converted.instant, score: Number(item.score), index });
+    }
+    const history = (await Score.history(userId, profile.id)).map(item => ({ time: item.created_at, score: item.score, index: null }));
+    const ordered = history.concat(prepared).sort((a, b) => a.time.localeCompare(b.time));
+    for (let i = 1; i < ordered.length; i++) {
+      const a = ordered[i - 1], b = ordered[i];
+      if (a.index === null && b.index === null) continue;
+      const error = a.time === b.time ? 'Für diesen Zeitpunkt gibt es bereits einen Eintrag.' : b.score < a.score ? 'Dieser Score passt nicht zur zeitlichen Reihenfolge.' : null;
+      if (error) { if (a.index !== null) errors[a.index] = error; if (b.index !== null) errors[b.index] = error; }
+    }
+    res.json({ errors });
+  } catch (error) { next(error); }
+};
+exports.bulkSave = async (req, res, next) => {
+  try {
+    const userId = res.locals.currentUser.id;
+    const profile = validId(req.params.id) && await Profile.find(userId, req.params.id);
+    if (!profile) return res.status(404).json({ error: 'Account nicht gefunden.' });
+    const { submissionKey, entries: raw } = req.body;
+    if (typeof submissionKey !== 'string' || !/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(submissionKey) || typeof raw !== 'string') return res.status(400).json({ error: 'Bitte prüfe deine Eingaben.' });
+    let input;
+    try { input = JSON.parse(raw); } catch { return res.status(400).json({ error: 'Die Einträge konnten nicht gelesen werden.' }); }
+    if (!Array.isArray(input) || input.length < 1 || input.length > 500) return res.status(400).json({ error: 'Bitte gib zwischen 1 und 500 Einträge ein.' });
+    const entries = [];
+    for (const [index, item] of input.entries()) {
+      if (!item || typeof item.score !== 'string' || !/^\d+$/.test(item.score) || !Number.isSafeInteger(Number(item.score))) return res.status(400).json({ error: `Eintrag ${index + 1}: Bitte gib einen gültigen Score ein.` });
+      const converted = berlinInstant(item.date, item.time);
+      if (converted.error || Date.parse(converted.instant) > Date.now()) {
+        const detail = converted.error === 'ambiguous' ? 'Diese Uhrzeit kommt bei der Zeitumstellung zweimal vor.' : converted.error === 'nonexistent' ? 'Diese Uhrzeit gibt es wegen der Zeitumstellung nicht.' : 'Datum oder Uhrzeit ist ungültig oder liegt in der Zukunft.';
+        return res.status(400).json({ error: `Eintrag ${index + 1}: ${detail}` });
+      }
+      entries.push({ measuredAt: converted.instant, score: Number(item.score) });
+    }
+    const hash = crypto.createHash('sha256').update(JSON.stringify(entries)).digest('hex');
+    let receipt = await Score.bulkReceipt(userId, submissionKey);
+    if (!receipt) {
+      try { await Score.createBulk(userId, profile.id, submissionKey, hash, entries); }
+      catch (error) {
+        if (error.code !== 'SQLITE_CONSTRAINT') throw error;
+        receipt = await Score.bulkReceipt(userId, submissionKey);
+        if (!receipt) return res.status(409).json({ error: 'Die Zeitpunkte oder Scores passen nicht zu den vorhandenen Einträgen. Bitte prüfe die Einträge.' });
+      }
+      if (!receipt) { statCache.invalidate(userId, profile.id); receipt = { profile_id: profile.id, payload_hash: hash }; }
+    }
+    if (receipt.profile_id !== profile.id || receipt.payload_hash !== hash) return res.status(409).json({ error: 'Diese Speicherung wurde bereits mit anderen Einträgen versucht. Bitte lade die Seite neu.' });
+    res.json({ success: true, count: entries.length, redirect: `/profiles/${profile.id}?tab=liste` });
+  } catch (error) { next(error); }
+};
 exports.createScore = async (req, res, next) => {
   try {
     const userId = res.locals.currentUser.id;
     const profile = validId(req.params.id) && await Profile.find(userId, req.params.id);
     if (!profile) return notFound(res);
-    const { score, submissionKey, returnTo } = req.body;
+    const { score, submissionKey, returnTo, useCurrent, date, time } = req.body;
+    const historical = useCurrent !== 'yes' && (date !== undefined || time !== undefined);
+    const converted = historical ? berlinInstant(date, time) : null;
+    if (historical && (converted.error || Date.parse(converted.instant) > Date.now())) {
+      const message = converted.error === 'ambiguous' ? 'Diese Uhrzeit kommt wegen der Zeitumstellung zweimal vor. Bitte wähle eine andere Uhrzeit.' : converted.error === 'nonexistent' ? 'Diese Uhrzeit gibt es wegen der Zeitumstellung nicht. Bitte wähle eine andere Uhrzeit.' : 'Bitte gib ein gültiges Datum und eine Uhrzeit ein, die nicht in der Zukunft liegen.';
+      return wantsJson(req) ? res.status(400).json({ error: message }) : res.status(400).render('error', { message });
+    }
     if (typeof score !== 'string' || !/^\d+$/.test(score) || !Number.isSafeInteger(Number(score)) ||
         typeof submissionKey !== 'string' || !/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(submissionKey)) {
       return res.status(400).render('error', { message: 'Bitte gib den Snapscore als ganze Zahl ohne Minuszeichen oder Komma ein. Er darf höchstens 9.007.199.254.740.991 betragen.' });
@@ -100,16 +197,16 @@ exports.createScore = async (req, res, next) => {
     let entry = await Score.findByKey(userId, profile.id, submissionKey);
     let created = 0;
     if (!entry) {
-      created = await Score.createNondecreasing(userId, profile.id, Number(score), submissionKey);
+      created = await Score.createNondecreasing(userId, profile.id, Number(score), submissionKey, historical ? converted.instant : undefined);
       if (created) statCache.invalidate(userId, profile.id);
       entry = await Score.findByKey(userId, profile.id, submissionKey);
     }
-    if (!entry || entry.score !== Number(score)) {
-      const message = 'Der neue Score darf nicht kleiner als der zuletzt gespeicherte Score sein. Prüfe deine Eingabe.';
+    if (!entry || entry.score !== Number(score) || (historical && entry.measured_at !== converted.instant) || (!historical && entry.measured_at !== entry.saved_at)) {
+      const message = 'Der Score passt nicht zu den benachbarten Einträgen oder für diesen Zeitpunkt gibt es bereits einen Eintrag.';
       return wantsJson(req) ? res.status(409).json({ error: message }) : res.status(409).render('error', { message });
     }
     const destination = returnTo === 'profile' ? `/profiles/${profile.id}` : '/';
-    if (created) {
+    if (created && !historical) {
       const history = await Score.history(userId, profile.id);
       const exceptions = (await Score.exceptionsForUser(userId)).filter(item => item.profile_id === profile.id).map(item => item.day);
       const before = streak(history.filter(item => item.id !== entry.id), Date.now(), exceptions).current;
@@ -120,7 +217,7 @@ exports.createScore = async (req, res, next) => {
         req.session.streakEffect = { profileId: profile.id, milestone };
       } else { delete req.session.streakEffect; }
     }
-    const expires = Date.parse(entry.created_at) + 30000;
+    const expires = Date.parse(entry.saved_at) + 30000;
     req.session.scoreNotice = destination;
     req.session.scoreUndo = { userId, profileId: profile.id, entryId: entry.id, key: submissionKey, expires };
     req.session.save(error => error ? next(error) : wantsJson(req) ? res.json({ redirect: destination }) : res.redirect(303, destination));

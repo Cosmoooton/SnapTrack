@@ -1,0 +1,36 @@
+<%- include('../partials/head') %>
+<%- include('../partials/nav') %>
+<main class="container dashboard py-4 py-md-5" id="smart-app" data-user="<%= currentUser.id %>" data-profile="<%= profile.id %>" data-endpoint="/profiles/<%= profile.id %>/scores/bulk" data-preview="/profiles/<%= profile.id %>/scores/import/preview" data-csrf="<%= csrfToken %>">
+  <a class="back-link" href="/profiles/<%= profile.id %>"><i class="bi bi-arrow-left me-2" aria-hidden="true"></i>Zurück zum Profil</a>
+  <section class="card border-0 shadow-sm surface-card form-card mt-4"><div class="card-body">
+    <p class="profile-caption"><%= profile.username %></p><h1 class="fs-3">Aus Notizen importieren</h1>
+    <p id="smart-progress" class="text-secondary small">Einfügen → Tage zuordnen → Prüfen → Importieren</p>
+    <div id="smart-message" role="status" aria-live="polite" hidden></div>
+    <div id="smart-resume" hidden><p>Import fortsetzen?</p><div class="d-grid gap-2"><button id="smart-resume-yes" class="btn btn-primary" type="button">Fortsetzen</button><a class="btn btn-secondary" href="/profiles/<%= profile.id %>">Später</a><button id="smart-discard" class="btn btn-link text-danger" type="button">Entwurf löschen</button></div></div>
+    <div id="smart-paste" hidden>
+      <label for="smart-text" class="form-label">Kopiere deine Liste aus Notizen hier hinein.</label>
+      <textarea id="smart-text" class="form-control" rows="8" placeholder="13:30 58238&#10;14:45 58410"></textarea>
+      <label for="smart-order" class="form-label mt-3">Wie ist deine Liste sortiert?</label>
+      <select id="smart-order" class="form-select"><option value="oldest">Ältester Eintrag zuerst</option><option value="newest">Neuester Eintrag zuerst</option></select>
+      <button id="smart-parse" class="btn btn-primary w-100 mt-3" type="button">Weiter: Tage zuordnen</button>
+    </div>
+    <div id="smart-days" hidden>
+      <p id="smart-recognized"></p>
+      <label for="smart-reference" class="form-label">Von welchem Tag ist dein letzter Eintrag?</label><input id="smart-reference" class="form-control" type="date">
+      <p class="form-text">Uhrzeiten gelten für Berlin. Prüfe alle Tageswechsel: Auch bei steigender Uhrzeit können Tage fehlen.</p>
+      <details class="mt-3"><summary class="btn btn-secondary w-100">Tageswechsel prüfen oder ändern</summary><p class="form-text mt-2">Anzahl vergangener Tage vor einem Eintrag. Vorgeschlagene Wechsel sind nur Hinweise.</p><div id="smart-boundaries"></div></details>
+      <div id="smart-blocks" class="mt-3"></div>
+      <div class="form-check mt-3"><input class="form-check-input" type="checkbox" id="smart-confirm-days"><label class="form-check-label" for="smart-confirm-days">Ich habe alle zugeordneten Tage und Tageswechsel geprüft.</label></div>
+      <div class="d-grid gap-2 mt-3"><button id="smart-to-review" class="btn btn-primary" type="button">Weiter: Einträge prüfen</button><button id="smart-days-back" class="btn btn-secondary" type="button">Zurück</button></div>
+    </div>
+    <div id="smart-review" hidden>
+      <div id="smart-summary" aria-live="polite"></div>
+      <div class="d-grid gap-2 mt-3"><button id="smart-errors" class="btn btn-secondary" type="button">Fehler prüfen</button><button id="smart-all" class="btn btn-secondary" type="button">Alle Einträge ansehen</button><button id="smart-edit-days" class="btn btn-secondary" type="button">Tageszuordnung ändern</button><button id="smart-to-confirm" class="btn btn-primary" type="button">Import abschließen</button></div>
+    </div>
+    <div id="smart-rows" hidden><h2 id="smart-rows-title" class="fs-5"></h2><div id="smart-row-list"></div><button id="smart-rows-back" class="btn btn-secondary w-100 mt-3" type="button">Zurück</button></div>
+    <div id="smart-confirm" hidden><h2 id="smart-confirm-title" class="fs-5"></h2><p>Alle ausgewählten Einträge werden gemeinsam gespeichert.</p><div class="d-grid gap-2"><button id="smart-save" class="btn btn-primary" type="button">Einträge importieren</button><button id="smart-confirm-back" class="btn btn-secondary" type="button">Zurück</button></div></div>
+    <div id="smart-success" hidden><p id="smart-success-text"></p><a class="btn btn-primary w-100" href="/profiles/<%= profile.id %>?tab=liste">Zum Score-Verlauf</a></div>
+  </div></section>
+</main>
+<script src="<%= assetBase %>/js/historical-scores.js" defer></script><script src="<%= assetBase %>/js/smartpaste.js" defer></script>
+<%- include('../partials/footer') %>

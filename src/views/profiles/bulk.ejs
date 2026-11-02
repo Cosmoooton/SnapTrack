@@ -1,0 +1,27 @@
+<%- include('../partials/head') %>
+<%- include('../partials/nav') %>
+<main class="container dashboard py-4 py-md-5" id="bulk-app" data-user="<%= currentUser.id %>" data-profile="<%= profile.id %>" data-endpoint="/profiles/<%= profile.id %>/scores/bulk" data-csrf="<%= csrfToken %>">
+  <a class="back-link" href="/profiles/<%= profile.id %>"><i class="bi bi-arrow-left me-2" aria-hidden="true"></i>Zurück zum Profil</a>
+  <section class="card border-0 shadow-sm surface-card form-card mt-4"><div class="card-body">
+    <p class="profile-caption"><%= profile.username %></p>
+    <h1 class="fs-3">Mehrere Scores eintragen</h1>
+    <div id="bulk-message" role="status" aria-live="polite" class="mt-3" hidden></div>
+    <div id="bulk-resume" hidden><p id="bulk-resume-text" class="mt-3"></p><div class="d-grid gap-2"><button class="btn btn-primary" id="bulk-resume-yes" type="button">Fortsetzen</button><a class="btn btn-secondary" href="/profiles/<%= profile.id %>">Später</a><button class="btn btn-link text-danger" id="bulk-discard" type="button">Entwurf löschen</button></div></div>
+    <div id="bulk-editor" hidden>
+      <p id="bulk-count" class="text-secondary mt-3" aria-live="polite"></p>
+      <form id="bulk-form">
+        <label for="bulk-date" class="form-label">Datum</label><input class="form-control" id="bulk-date" type="date" required>
+        <label for="bulk-time" class="form-label mt-3">Uhrzeit</label><input class="form-control" id="bulk-time" type="time" required>
+        <label for="bulk-score" class="form-label mt-3">Snapscore</label><input class="form-control" id="bulk-score" type="text" inputmode="numeric" pattern="[0-9]+" maxlength="16" autocomplete="off" required>
+        <p class="form-text">Datum und Uhrzeit gelten für Berlin.</p>
+        <button id="bulk-next" class="btn btn-primary w-100 mt-2" type="submit">Nächster Wert</button>
+      </form>
+      <div class="d-grid gap-2 mt-3"><button class="btn btn-secondary" id="bulk-review" type="button">Einträge prüfen</button><button class="btn btn-secondary" id="bulk-finish" type="button">Erfassung abschließen</button></div>
+    </div>
+    <div id="bulk-review-view" hidden><h2 class="fs-5 mt-3">Einträge prüfen</h2><ul id="bulk-list" class="list-unstyled"></ul><button class="btn btn-secondary w-100" id="bulk-review-back" type="button">Zurück</button></div>
+    <div id="bulk-confirm" hidden><h2 id="bulk-confirm-title" class="fs-5 mt-3"></h2><p>Alle Einträge werden gemeinsam geprüft und gespeichert.</p><div class="d-grid gap-2"><button class="btn btn-primary" id="bulk-save" type="button">Einträge speichern</button><button class="btn btn-secondary" id="bulk-confirm-back" type="button">Zurück</button></div></div>
+    <div id="bulk-success" hidden><p id="bulk-success-text" class="mt-3"></p><a class="btn btn-primary w-100" href="/profiles/<%= profile.id %>?tab=liste">Zum Score-Verlauf</a></div>
+  </div></section>
+</main>
+<script src="<%= assetBase %>/js/bulk.js" defer></script>
+<%- include('../partials/footer') %>

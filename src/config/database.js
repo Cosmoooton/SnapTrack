@@ -92,6 +92,36 @@ db.serialize(() => {
         CREATE TRIGGER IF NOT EXISTS rev_profile_update AFTER UPDATE ON snapchat_profiles BEGIN
           INSERT INTO profile_revisions(profile_id,revision) VALUES(NEW.id,1) ON CONFLICT(profile_id) DO UPDATE SET revision=revision+1;
         END;
+        CREATE INDEX IF NOT EXISTS scores_active_measured ON score_entries(profile_id, measured_at DESC, id DESC) WHERE deleted_at IS NULL;
+        CREATE TRIGGER IF NOT EXISTS score_default_measured AFTER INSERT ON score_entries WHEN NEW.measured_at IS NULL BEGIN
+          UPDATE score_entries SET measured_at=NEW.created_at WHERE id=NEW.id;
+        END;
+        CREATE TABLE IF NOT EXISTS bulk_score_imports (
+          user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE, profile_id INTEGER NOT NULL REFERENCES snapchat_profiles(id) ON DELETE CASCADE,
+          request_key TEXT NOT NULL, payload_hash TEXT NOT NULL, entries TEXT NOT NULL,
+          created_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now')),
+          PRIMARY KEY(user_id,request_key)
+        );
+        CREATE TRIGGER IF NOT EXISTS bulk_scores_insert AFTER INSERT ON bulk_score_imports BEGIN
+          SELECT CASE WHEN NOT EXISTS (SELECT 1 FROM snapchat_profiles WHERE id=NEW.profile_id AND user_id=NEW.user_id AND deleted_at IS NULL)
+            THEN RAISE(ABORT, 'Account nicht gefunden') END;
+          SELECT CASE WHEN EXISTS (
+            SELECT 1 FROM (
+              SELECT measured_at,score,is_new,
+                LAG(measured_at) OVER (ORDER BY measured_at, is_new) AS prev_time,
+                LAG(score) OVER (ORDER BY measured_at, is_new) AS prev_score,
+                LAG(is_new) OVER (ORDER BY measured_at, is_new) AS prev_new
+              FROM (
+                SELECT measured_at,score,0 AS is_new FROM score_entries WHERE profile_id=NEW.profile_id AND deleted_at IS NULL
+                UNION ALL
+                SELECT json_extract(value,'$.measuredAt'),json_extract(value,'$.score'),1 FROM json_each(NEW.entries)
+              )
+            ) WHERE (is_new=1 OR prev_new=1) AND (measured_at=prev_time OR score<prev_score)
+          ) THEN RAISE(ABORT, 'Zeitpunkte oder Score-Reihenfolge stehen im Konflikt') END;
+          INSERT INTO score_entries(profile_id,score,measured_at,created_at,submission_key)
+            SELECT NEW.profile_id,json_extract(value,'$.score'),json_extract(value,'$.measuredAt'),NEW.created_at,
+              'bulk:' || NEW.user_id || ':' || NEW.request_key || ':' || key FROM json_each(NEW.entries);
+        END;
         CREATE TABLE IF NOT EXISTS admin_user_changes (
           id INTEGER PRIMARY KEY, admin_id INTEGER NOT NULL REFERENCES users(id),
           user_id INTEGER NOT NULL REFERENCES users(id), new_role TEXT NOT NULL CHECK(new_role IN ('user','admin')),
@@ -180,10 +210,11 @@ db.serialize(() => {
           id INTEGER PRIMARY KEY, admin_id INTEGER NOT NULL REFERENCES users(id), user_id INTEGER NOT NULL REFERENCES users(id),
           profile_id INTEGER NOT NULL, entry_id INTEGER NOT NULL, reason TEXT NOT NULL, created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
         );
-        CREATE TRIGGER IF NOT EXISTS apply_admin_soft_deletion AFTER INSERT ON admin_soft_deletions BEGIN
+        DROP TRIGGER IF EXISTS apply_admin_soft_deletion;
+        CREATE TRIGGER apply_admin_soft_deletion AFTER INSERT ON admin_soft_deletions BEGIN
           SELECT CASE WHEN NOT EXISTS (SELECT 1 FROM users WHERE id=NEW.admin_id AND role='admin' AND status='active') THEN RAISE(ABORT, 'Administrator nicht aktiv') END;
           SELECT CASE WHEN NOT EXISTS (SELECT 1 FROM score_entries s JOIN snapchat_profiles p ON p.id=s.profile_id WHERE s.id=NEW.entry_id AND p.id=NEW.profile_id AND p.user_id=NEW.user_id AND p.deleted_at IS NULL AND s.deleted_at IS NULL) THEN RAISE(ABORT, 'Eintrag nicht gefunden') END;
-          INSERT INTO audit_logs(admin_id,action,user_id,profile_id,details) SELECT NEW.admin_id,'score.delete',NEW.user_id,NEW.profile_id,'Eintrag ' || s.id || ', Score ' || s.score || ', Zeitpunkt ' || s.created_at || '; Grund: ' || NEW.reason FROM score_entries s WHERE s.id=NEW.entry_id;
+          INSERT INTO audit_logs(admin_id,action,user_id,profile_id,details) SELECT NEW.admin_id,'score.delete',NEW.user_id,NEW.profile_id,'Eintrag ' || s.id || ', Score ' || s.score || ', Zeitpunkt ' || s.measured_at || '; Grund: ' || NEW.reason FROM score_entries s WHERE s.id=NEW.entry_id;
           UPDATE score_entries SET deleted_at=strftime('%Y-%m-%dT%H:%M:%fZ', 'now'),deleted_by='admin' WHERE id=NEW.entry_id;
         END;
         CREATE TABLE IF NOT EXISTS streak_exceptions (
@@ -238,14 +269,15 @@ db.serialize(() => {
           new_score INTEGER NOT NULL CHECK(new_score >= 0 AND new_score <= 9007199254740991), new_time TEXT NOT NULL,
           reason TEXT NOT NULL, created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
         );
-        CREATE TRIGGER IF NOT EXISTS apply_admin_score_correction AFTER INSERT ON admin_score_corrections BEGIN
+        DROP TRIGGER IF EXISTS apply_admin_score_correction;
+        CREATE TRIGGER apply_admin_score_correction AFTER INSERT ON admin_score_corrections BEGIN
           SELECT CASE WHEN NOT EXISTS (SELECT 1 FROM users WHERE id=NEW.admin_id AND role='admin' AND status='active') THEN RAISE(ABORT, 'Administrator nicht aktiv') END;
           SELECT CASE WHEN NOT EXISTS (SELECT 1 FROM score_entries s JOIN snapchat_profiles p ON p.id=s.profile_id
-            WHERE s.id=NEW.entry_id AND p.id=NEW.profile_id AND p.user_id=NEW.user_id AND p.deleted_at IS NULL AND s.deleted_at IS NULL AND s.score=NEW.old_score AND s.created_at=NEW.old_time)
+            WHERE s.id=NEW.entry_id AND p.id=NEW.profile_id AND p.user_id=NEW.user_id AND p.deleted_at IS NULL AND s.deleted_at IS NULL AND s.score=NEW.old_score AND s.measured_at=NEW.old_time)
             THEN RAISE(ABORT, 'Eintrag wurde zwischenzeitlich geändert') END;
           INSERT INTO audit_logs(admin_id,action,user_id,profile_id,details) VALUES(NEW.admin_id,'score.correct',NEW.user_id,NEW.profile_id,
             'Eintrag ' || NEW.entry_id || ': ' || NEW.old_score || ' @ ' || NEW.old_time || ' → ' || NEW.new_score || ' @ ' || NEW.new_time || '; Grund: ' || NEW.reason);
-          UPDATE score_entries SET score=NEW.new_score,created_at=NEW.new_time WHERE id=NEW.entry_id;
+          UPDATE score_entries SET score=NEW.new_score,measured_at=NEW.new_time WHERE id=NEW.entry_id;
         END;
         CREATE TABLE IF NOT EXISTS revoked_sessions (
           session_key TEXT PRIMARY KEY, user_id INTEGER NOT NULL REFERENCES users(id), admin_id INTEGER NOT NULL REFERENCES users(id),
@@ -267,6 +299,10 @@ db.serialize(() => {
           if (!existing.has('deleted_at')) changes.push(['deleted_at', `ALTER TABLE ${table} ADD COLUMN deleted_at TEXT`]);
           if (!existing.has('deleted_by')) changes.push(['deleted_by', `ALTER TABLE ${table} ADD COLUMN deleted_by TEXT`]);
         }
+        if (!scoreColumns.some(column => column.name === 'measured_at')) {
+          changes.push(['measured_at', 'ALTER TABLE score_entries ADD COLUMN measured_at TEXT']);
+        }
+        changes.push(['measured_at_backfill', 'UPDATE score_entries SET measured_at=created_at WHERE measured_at IS NULL']);
         apply(0);
       });
     });

@@ -31,7 +31,7 @@ function createApp() {
   app.get('/sw.js', (req, res) => { res.set('Cache-Control', 'no-cache').type('application/javascript').send(`const ASSET_BASE=${JSON.stringify(assets.base)};\nconst ASSET_PATHS=${JSON.stringify(assets.files.map(([url]) => url))};\n` + fs.readFileSync(path.join(__dirname, 'public/sw.js'), 'utf8')); });
   app.use((req, res, next) => { res.set('Cache-Control', 'no-store'); next(); });
   app.use((req, res, next) => { ready.then(() => next(), next); });
-  app.use(express.urlencoded({ extended: false, limit: '10kb' }));
+  app.use(express.urlencoded({ extended: false, limit: '128kb' }));
   app.use(session({
     name: 'snaptrack.sid',
     store: new SQLiteStore({ db: 'sessions.sqlite', dir: dataDir }),

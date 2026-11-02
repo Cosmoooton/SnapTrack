@@ -7,7 +7,7 @@ require.cache[config] = { id: config, filename: config, loaded: true, exports: {
 const Score = require('../src/models/score');
 db.serialize(() => {
   db.run('CREATE TABLE snapchat_profiles (id INTEGER PRIMARY KEY, user_id INTEGER NOT NULL, deleted_at TEXT)');
-  db.run("CREATE TABLE score_entries (id INTEGER PRIMARY KEY, profile_id INTEGER NOT NULL, score INTEGER NOT NULL, submission_key TEXT UNIQUE, created_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now')), deleted_at TEXT, deleted_by TEXT)" );
+  db.run("CREATE TABLE score_entries (id INTEGER PRIMARY KEY, profile_id INTEGER NOT NULL, score INTEGER NOT NULL, submission_key TEXT UNIQUE, measured_at TEXT, created_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now')), deleted_at TEXT, deleted_by TEXT)" );
   db.run('INSERT INTO snapchat_profiles (id,user_id) VALUES (1, 1), (2, 2)');
   db.run('CREATE TABLE streak_milestones (user_id INTEGER, profile_id INTEGER, milestone INTEGER, PRIMARY KEY(user_id, profile_id, milestone))');
 });
@@ -44,4 +44,16 @@ test('Paginierung und Verlauf bleiben auf den eigenen Account beschränkt', asyn
   assert.notEqual(firstPage[0].id, secondPage[0].id);
   assert.equal((await Score.page(2, 1, 0, 50)).length, 0);
   assert.equal((await Score.range(2, 1, '0000-01-01', '9999-12-31')).length, 0);
+});
+test('Historische Einträge werden anhand beider zeitlichen Nachbarn geprüft', async () => {
+  assert.equal(await Score.createNondecreasing(2, 2, 100, 'hist-a', '2020-01-01T10:00:00.000Z'), 1);
+  assert.equal(await Score.createNondecreasing(2, 2, 300, 'hist-c', '2020-01-01T12:00:00.000Z'), 1);
+  assert.equal(await Score.createNondecreasing(2, 2, 99, 'hist-low', '2020-01-01T11:00:00.000Z'), 0);
+  assert.equal(await Score.createNondecreasing(2, 2, 301, 'hist-high', '2020-01-01T11:00:00.000Z'), 0);
+  assert.equal(await Score.createNondecreasing(1, 2, 200, 'hist-foreign', '2020-01-01T11:00:00.000Z'), 0);
+  assert.equal(await Score.createNondecreasing(2, 2, 200, 'hist-b', '2020-01-01T11:00:00.000Z'), 1);
+  assert.equal(await Score.createNondecreasing(2, 2, 200, 'hist-duplicate-time', '2020-01-01T11:00:00.000Z'), 0);
+  const history = await Score.history(2, 2);
+  assert.deepEqual(history.map(item => item.score), [300, 200, 100]);
+  assert.notEqual(history[1].saved_at, history[1].measured_at);
 });

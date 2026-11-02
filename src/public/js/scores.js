@@ -8,7 +8,13 @@ document.querySelectorAll('.score-form').forEach(form => {
   const error = form.querySelector('.score-error');
   const difference = form.querySelector('.score-difference');
   const button = form.querySelector('[type="submit"]');
-  const previous = form.dataset.previous === '' ? null : Number(form.dataset.previous);
+  const latest = form.dataset.previous === '' ? null : Number(form.dataset.previous);
+  let previous = latest;
+  const current = form.querySelector('.score-current');
+  const historical = form.querySelector('.score-historical');
+  const date = form.querySelector('.score-date');
+  const time = form.querySelector('.score-time');
+  let neighborRequest = 0;
   let pending = false;
   let uncertain = false;
   function update() {
@@ -23,6 +29,24 @@ document.querySelectorAll('.score-form').forEach(form => {
     difference.classList.toggle('text-danger', lower);
   }
   input.addEventListener('input', update);
+  async function updateTime() {
+    const request = ++neighborRequest;
+    historical.hidden = current.checked;
+    date.disabled = time.disabled = current.checked;
+    date.required = time.required = !current.checked;
+    previous = current.checked ? latest : null;
+    update();
+    if (current.checked || !date.value || !time.value) return;
+    try {
+      const response = await fetch(`${form.action.replace(/\/scores$/, '/score-neighbor')}?${new URLSearchParams({ date: date.value, time: time.value })}`, { headers: { Accept: 'application/json' } });
+      const result = await response.json();
+      if (request === neighborRequest && response.ok) { previous = result.previous; update(); }
+    } catch { /* Server validation remains authoritative. */ }
+  }
+  current.addEventListener('change', updateTime);
+  current.addEventListener('click', event => { if (uncertain) event.preventDefault(); });
+  date.addEventListener('change', updateTime);
+  time.addEventListener('change', updateTime);
   let saved = false;
   const initialValue = input.value;
   if (window.visualViewport) {
@@ -67,11 +91,15 @@ document.querySelectorAll('.score-form').forEach(form => {
         error.hidden = false;
         uncertain = false;
         input.readOnly = false;
+        current.style.pointerEvents = '';
+        date.readOnly = time.readOnly = false;
         button.textContent = 'Speichern';
       } else { throw new Error('unconfirmed'); }
     } catch {
       uncertain = true;
       input.readOnly = true;
+      current.style.pointerEvents = 'none';
+      date.readOnly = time.readOnly = true;
       error.textContent = 'Speichern nicht bestätigt. Prüfe deine Verbindung und versuche es erneut.';
       error.hidden = false;
       button.textContent = 'Erneut versuchen';

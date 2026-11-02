@@ -38,7 +38,7 @@ test('Migration erhält bestehende Daten und schützt den letzten aktiven Admin'
   fs.mkdirSync(configDir, { recursive: true }); fs.mkdirSync(path.join(root, 'data'));
   fs.copyFileSync(path.join(process.cwd(), 'src/config/database.js'), path.join(configDir, 'database.js'));
   const legacy = new sqlite3.Database(path.join(root, 'data', 'app.sqlite'));
-  await new Promise((resolve, reject) => legacy.exec("CREATE TABLE users (id INTEGER PRIMARY KEY, username TEXT NOT NULL UNIQUE COLLATE NOCASE, password_hash TEXT NOT NULL, created_at TEXT DEFAULT CURRENT_TIMESTAMP); INSERT INTO users(id,username,password_hash) VALUES(1,'existing','hash')", error => error ? reject(error) : resolve()));
+  await new Promise((resolve, reject) => legacy.exec("CREATE TABLE users (id INTEGER PRIMARY KEY, username TEXT NOT NULL UNIQUE COLLATE NOCASE, password_hash TEXT NOT NULL, created_at TEXT DEFAULT CURRENT_TIMESTAMP); INSERT INTO users(id,username,password_hash) VALUES(1,'existing','hash'); CREATE TABLE snapchat_profiles (id INTEGER PRIMARY KEY, user_id INTEGER NOT NULL, username TEXT NOT NULL, created_at TEXT DEFAULT CURRENT_TIMESTAMP, UNIQUE(user_id,username)); INSERT INTO snapchat_profiles(id,user_id,username) VALUES(77,1,'legacy'); CREATE TABLE score_entries (id INTEGER PRIMARY KEY, profile_id INTEGER NOT NULL, score INTEGER NOT NULL, submission_key TEXT NOT NULL UNIQUE, created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP); INSERT INTO score_entries VALUES(77,77,123,'legacy-key','2020-01-02T11:00:00.000Z')", error => error ? reject(error) : resolve()));
   await new Promise(resolve => legacy.close(resolve));
   const { db, ready } = require(path.join(configDir, 'database.js'));
   const run = (sql, params = []) => new Promise((resolve, reject) => db.run(sql, params, function (error) { error ? reject(error) : resolve(this.changes); }));
@@ -46,6 +46,7 @@ test('Migration erhält bestehende Daten und schützt den letzten aktiven Admin'
   try {
     await ready;
     assert.deepEqual(await get('SELECT username,role,status FROM users WHERE id=1'), { username: 'existing', role: 'user', status: 'active' });
+    assert.deepEqual(await get('SELECT score,created_at,measured_at FROM score_entries WHERE id=77'), { score: 123, created_at: '2020-01-02T11:00:00.000Z', measured_at: '2020-01-02T11:00:00.000Z' });
     await run("UPDATE users SET role='admin' WHERE id=1");
     await run("INSERT INTO users(id,username,password_hash,force_password_change,created_by_admin_id) VALUES(3,'created','bcrypt-hash',1,1)");
     const created = await get("SELECT id,role,status,force_password_change FROM users WHERE username='created'");
@@ -91,6 +92,9 @@ test('Migration erhält bestehende Daten und schützt den letzten aktiven Admin'
     const original = await get('SELECT score,created_at FROM score_entries WHERE id=1');
     await run('INSERT INTO admin_score_corrections(admin_id,user_id,profile_id,entry_id,old_score,old_time,new_score,new_time,reason) VALUES(?,?,?,?,?,?,?,?,?)', [1,2,1,1,original.score,original.created_at,200,'2026-01-01T00:00:00.000Z','test']);
     assert.equal((await get('SELECT score FROM score_entries WHERE id=1')).score, 200);
+    const corrected = await get('SELECT created_at,measured_at FROM score_entries WHERE id=1');
+    assert.equal(corrected.created_at, original.created_at);
+    assert.equal(corrected.measured_at, '2026-01-01T00:00:00.000Z');
     await assert.rejects(run('INSERT INTO admin_score_corrections(admin_id,user_id,profile_id,entry_id,old_score,old_time,new_score,new_time,reason) VALUES(?,?,?,?,?,?,?,?,?)', [1,2,1,1,original.score,original.created_at,300,'2026-01-01T00:00:00.000Z','test']), /zwischenzeitlich geändert/);
     await run("INSERT INTO admin_streak_actions(admin_id,user_id,profile_id,day,action,reason) VALUES(1,2,1,'2026-01-02','add','test')");
     const exceptionRevision = (await get('SELECT revision FROM profile_revisions WHERE profile_id=1')).revision;

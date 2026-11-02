@@ -10,6 +10,12 @@
         <input class="form-control score-input" id="score-<%= profile.id %>" name="score" type="text" inputmode="numeric" pattern="[0-9]+" maxlength="16" value="<%= profile.scores[0] ? profile.scores[0].score : '' %>" required autocomplete="off" aria-describedby="score-help-<%= profile.id %>">
         <div class="form-text" id="score-help-<%= profile.id %>">Gib nur Ziffern ein, ohne Komma oder Minuszeichen.</div>
         <div class="score-difference mt-2" aria-live="polite"></div>
+        <div class="form-check mt-3"><input class="form-check-input score-current" type="checkbox" name="useCurrent" value="yes" id="score-current-<%= profile.id %>" checked><label class="form-check-label" for="score-current-<%= profile.id %>">Aktuelles Datum &amp; Uhrzeit verwenden</label></div>
+        <div class="score-historical mt-3" hidden>
+          <p class="text-secondary mb-2">Wann hast du diesen Score abgelesen? (Berliner Zeit)</p>
+          <label class="form-label" for="score-date-<%= profile.id %>">Datum</label><input class="form-control score-date" type="date" name="date" id="score-date-<%= profile.id %>" disabled>
+          <label class="form-label mt-2" for="score-time-<%= profile.id %>">Uhrzeit</label><input class="form-control score-time" type="time" name="time" id="score-time-<%= profile.id %>" disabled>
+        </div>
         <div class="score-error alert alert-danger mt-3 mb-0" role="alert" hidden></div>
       </div>
       <div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Abbrechen</button><button type="submit" class="btn btn-primary">Speichern</button></div>

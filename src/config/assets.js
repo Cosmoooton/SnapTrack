@@ -3,7 +3,7 @@ const fs = require('fs');
 const path = require('path');
 const root = path.resolve(__dirname, '../..');
 const files = [
-  ['css/style.css', 'src/public/css/style.css'], ['js/scores.js', 'src/public/js/scores.js'],
+  ['css/style.css', 'src/public/css/style.css'], ['js/scores.js', 'src/public/js/scores.js'], ['js/bulk.js', 'src/public/js/bulk.js'], ['js/historical-scores.js', 'src/utils/historicalScores.js'], ['js/smartpaste.js', 'src/public/js/smartpaste.js'],
   ['js/score-chart.js', 'src/public/js/score-chart.js'], ['js/password.js', 'src/public/js/password.js'], ['js/password-toggle.js', 'src/public/js/password-toggle.js'], ['js/pwa.js', 'src/public/js/pwa.js'],
   ['vendor/bootstrap/css/bootstrap.min.css', 'node_modules/bootstrap/dist/css/bootstrap.min.css'],
   ['vendor/bootstrap/js/bootstrap.bundle.min.js', 'node_modules/bootstrap/dist/js/bootstrap.bundle.min.js'],

@@ -320,3 +320,7 @@ input, select, textarea { font-size: 16px !important; }
   .admin-mobile-menu { position: absolute; z-index: 1030; right: 0; top: calc(100% + .5rem); min-width: 200px; padding: .4rem; background: var(--st-surface); border: 1px solid var(--st-border); border-radius: .8rem; }
   .admin-filters > input, .admin-filters > label { max-width: none; width: 100%; }
 }
+#bulk-app button, #bulk-app a.btn { min-height: 44px; }
+#bulk-app input { font-size: 16px; }
+#smart-app button, #smart-app a.btn, #smart-app summary { min-height: 44px; }
+#smart-app input, #smart-app select, #smart-app textarea { font-size: 16px; }

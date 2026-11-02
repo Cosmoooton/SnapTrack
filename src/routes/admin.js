@@ -174,7 +174,7 @@ router.get('/users/:userId/diagnose', safe(async (req, res) => {
 router.get('/users/:userId/deleted', safe(async (req, res) => {
   const user = res.locals.targetUser;
   const deletedProfiles = await Admin.all('SELECT id,username,deleted_at,deleted_by FROM snapchat_profiles WHERE user_id=? AND deleted_at IS NOT NULL ORDER BY deleted_at DESC', [user.id]);
-  const deletedScores = await Admin.all('SELECT s.id,s.score,s.created_at,s.deleted_at,s.deleted_by,p.id AS profile_id,p.username FROM score_entries s JOIN snapchat_profiles p ON p.id=s.profile_id WHERE p.user_id=? AND p.deleted_at IS NULL AND s.deleted_at IS NOT NULL ORDER BY s.deleted_at DESC', [user.id]);
+  const deletedScores = await Admin.all('SELECT s.id,s.score,s.measured_at AS created_at,s.deleted_at,s.deleted_by,p.id AS profile_id,p.username FROM score_entries s JOIN snapchat_profiles p ON p.id=s.profile_id WHERE p.user_id=? AND p.deleted_at IS NULL AND s.deleted_at IS NOT NULL ORDER BY s.deleted_at DESC', [user.id]);
   for (const item of deletedScores) {
     const history = await Admin.scores(user.id, item.profile_id);
     const ordered = history.concat(item).sort((a, b) => Date.parse(a.created_at) - Date.parse(b.created_at) || a.id - b.id);
