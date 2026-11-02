@@ -1,4 +1,10 @@
 require('dotenv').config();
+
 const createApp = require('./app');
+
 const port = Number(process.env.PORT) || 3000;
-createApp().listen(port, () => console.log(`SnapTrack läuft auf Port ${port}.`));
+const host = process.env.HOST || '127.0.0.1';
+
+createApp().listen(port, host, () => {
+  console.log(`SnapTrack läuft auf ${host}:${port}.`);
+});
